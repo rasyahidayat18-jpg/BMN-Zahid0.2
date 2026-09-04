@@ -1,46 +1,50 @@
 [
   {
-    "content": "Phase 1: Backend foundation - Mongo connection, JWT auth + bcrypt, seed super admin, RBAC dependencies",
+    "content": "Backend: Update RBAC permissions - add stock_manage for PENGELOLA_BMN",
     "status": "completed"
   },
   {
-    "content": "Phase 1: Backend - Manajemen User CRUD, profile, audit logging",
+    "content": "Backend: Create Pydantic models for inventory items, stock transactions, adjustments",
     "status": "completed"
   },
   {
-    "content": "Backend: ALL modules (assets+photos, maintenance+approval, inventory, notifications, dashboard, reports) - implemented, verify with testing agent later",
+    "content": "Backend: Create routers/stock.py with full CRUD + dashboard + stock-in + adjustments + history",
     "status": "completed"
   },
   {
-    "content": "Get design guidelines from design_agent",
+    "content": "Backend: Update routers/inventory.py for stock validation, partial approval, auto stock deduction",
+    "status": "completed"
+  },
+  {
+    "content": "Backend: Register stock router in server.py + extend image serving",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: Create stock pages (Dashboard, List, Form, StockIn, Adjustment, History)",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: Update Layout.jsx sidebar with new menu items",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: Update App.js with new routes + AccessDenied component",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: Update InventoryDetail for stock validation + partial approval",
+    "status": "completed"
+  },
+  {
+    "content": "Frontend: Build & verify compilation",
+    "status": "completed"
+  },
+  {
+    "content": "Take screenshots to verify UI",
     "status": "in_progress"
   },
   {
-    "content": "Frontend: auth context, login, app shell w/ role-based sidebar, routing guards",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Dashboard (stats+charts), Manajemen User, Manajemen Role, Profil, Pengaturan",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: BMN module - Data Aset table, Tambah/Edit w/ photo upload, Detail gallery+lightbox, PJ Aset, Lokasi BMN",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Pemeliharaan + Approval berjenjang + komentar + riwayat",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Barang Persediaan - permintaan multi-item, approval, monitoring, riwayat",
-    "status": "pending"
-  },
-  {
-    "content": "Frontend: Notifikasi (bell/badge/sound), Audit Trail, Laporan + Export",
-    "status": "pending"
-  },
-  {
-    "content": "Test full app end-to-end (testing_agent_v3) across all roles",
+    "content": "Run testing_agent_v3 for comprehensive testing of Stock module",
     "status": "pending"
   }
 ]

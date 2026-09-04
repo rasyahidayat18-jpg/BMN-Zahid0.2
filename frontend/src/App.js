@@ -32,6 +32,13 @@ import InventoryApproval from "@/pages/inventory/InventoryApproval";
 import InventoryList from "@/pages/inventory/InventoryList";
 import InventoryDetail from "@/pages/inventory/InventoryDetail";
 
+import StockDashboard from "@/pages/stock/StockDashboard";
+import StockList from "@/pages/stock/StockList";
+import StockForm from "@/pages/stock/StockForm";
+import StockIn from "@/pages/stock/StockIn";
+import StockAdjustment from "@/pages/stock/StockAdjustment";
+import StockHistory from "@/pages/stock/StockHistory";
+
 const Protected = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loading /></div>;
@@ -63,6 +70,13 @@ function AppRoutes() {
         <Route path="/pemeliharaan/:id" element={<MaintenanceDetail />} />
 
         {/* Persediaan */}
+        <Route path="/persediaan/stock" element={<StockDashboard />} />
+        <Route path="/persediaan/stock/items" element={<StockList />} />
+        <Route path="/persediaan/stock/items/tambah" element={<StockForm />} />
+        <Route path="/persediaan/stock/items/:id/edit" element={<StockForm />} />
+        <Route path="/persediaan/stock/in" element={<StockIn />} />
+        <Route path="/persediaan/stock/adjustment" element={<StockAdjustment />} />
+        <Route path="/persediaan/stock/history" element={<StockHistory />} />
         <Route path="/persediaan/ajukan" element={<InventoryForm />} />
         <Route path="/persediaan/approval" element={<InventoryApproval />} />
         <Route path="/persediaan/monitoring" element={<InventoryList monitorMode />} />

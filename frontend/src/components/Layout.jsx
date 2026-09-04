@@ -17,6 +17,7 @@ import {
   LayoutDashboard, Package, PackagePlus, Wrench, CheckSquare, UserCog, MapPin,
   History, Boxes, ClipboardList, ClipboardCheck, Activity, Bell, Users, ShieldCheck,
   FileBarChart, ScrollText, Settings, LogOut, Menu, Building2, User, CheckCheck,
+  Warehouse, ArrowDownToLine, RotateCcw,
 } from "lucide-react";
 
 const NAV = [
@@ -36,6 +37,7 @@ const NAV = [
   {
     group: "Monitoring Persediaan",
     items: [
+      { to: "/persediaan/stock", label: "Stock Barang Persediaan", icon: Warehouse, perm: "stock_manage" },
       { to: "/persediaan/ajukan", label: "Ajukan Permintaan", icon: ClipboardList, perm: "inventory_create" },
       { to: "/persediaan/approval", label: "Approval Permintaan", icon: ClipboardCheck, perm: "inventory_approve" },
       { to: "/persediaan/monitoring", label: "Monitoring", icon: Activity, perm: "inventory_view_all" },

@@ -203,6 +203,8 @@ async def serve_image(image_id: str):
     if not img:
         img = await db.maintenance_images.find_one({"id": image_id})
     if not img:
+        img = await db.inventory_images.find_one({"id": image_id})
+    if not img:
         raise HTTPException(status_code=404, detail="Foto tidak ditemukan")
     raw = base64.b64decode(img["data"])
     return Response(content=raw, media_type=img.get("content_type", "image/jpeg"),

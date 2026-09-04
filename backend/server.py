@@ -5,7 +5,7 @@ import logging
 
 from database import client
 from seed import seed
-from routers import users, assets, maintenance, inventory, notifications, core, reports
+from routers import users, assets, maintenance, inventory, notifications, core, reports, stock
 
 app = FastAPI(title="Sistem Monitoring BMN dan Barang Persediaan")
 
@@ -26,6 +26,7 @@ api_router.include_router(inventory.router, tags=["inventory"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(core.router, tags=["core"])
 api_router.include_router(reports.router, tags=["reports"])
+api_router.include_router(stock.router, tags=["stock"])
 
 app.include_router(api_router)
 

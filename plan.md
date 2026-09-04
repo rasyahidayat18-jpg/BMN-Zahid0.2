@@ -1,170 +1,292 @@
-# plan.md
+# plan.md (UPDATED)
 
 ## 1) Objectives
-- Membangun aplikasi web responsif berbahasa Indonesia: **SISTEM MONITORING BMN DAN BARANG PERSEDIAAN** dengan 2 modul utama (BMN & Persediaan), **RBAC ketat di backend**, workflow approval, foto aset/kerusakan (base64 di MongoDB), notifikasi in-app + suara browser, audit trail, dan laporan ekspor.
-- Stack: **React + FastAPI + MongoDB**, shadcn/ui + Tailwind, recharts, react-router-dom, JWT email/password + bcrypt.
-- Seed awal: super admin **imigrasi.takengon2@gmail.com** (password **Admin@123**) + dummy data agar aplikasi terlihat hidup.
+- Membangun aplikasi web responsif berbahasa Indonesia: **SISTEM MONITORING BMN DAN BARANG PERSEDIAAN** untuk Kantor Imigrasi Takengon.
+- Stack final (disepakati): **React + FastAPI + MongoDB** (Motor) + shadcn/ui + Tailwind + recharts + react-router-dom + JWT (email/password) + bcrypt.
+- Modul utama:
+  1) **Monitoring BMN** (aset + foto + lokasi + penanggung jawab + pemeliharaan + approval 3 tingkat).
+  2) **Monitoring Persediaan** (permintaan barang + approval + status pemenuhan) **+ modul baru Stock Barang Persediaan** (stok, transaksi masuk/keluar, penyesuaian, riwayat pergerakan, notifikasi stok menipis, integrasi dengan permintaan).
+- **RBAC ketat** (6 role) enforced di backend (bukan hanya hide menu).
+- Notifikasi real-time MVP via polling: in-app (bell + badge) + suara browser.
+- Audit trail untuk aksi penting.
+- Laporan + export Excel/PDF.
+- Akun admin awal (seed): **imigrasi.takengon2@gmail.com / Admin@123**. Tidak ada registrasi publik.
+
+> Catatan penting perubahan requirement terakhir:
+> - Permintaan user terbaru menyebut “Supabase Storage + RLS”, namun keputusan stack yang sudah disepakati sebelumnya adalah **MongoDB + local server storage/penyimpanan lokal**. Implementasi plan ini tetap **mengikuti keputusan stack yang sudah disetujui**: MongoDB + penyimpanan lokal/di server (atau penyimpanan gambar ala sistem yang sudah ada: base64 + endpoint serve image). Jika di masa depan benar-benar ingin migrasi ke Supabase Storage, akan dibuat fase migrasi terpisah.
 
 ## 2) Implementation Steps
 
-### Phase 1 — Foundation (tanpa POC terpisah; langsung bangun core & test bertahap)
+### Phase 0 — Status saat ini (Sudah Selesai / Existing Implementation)
+**Kondisi proyek sekarang**
+- Backend FastAPI + MongoDB sudah berjalan, seed admin sukses, endpoint auth & RBAC teruji via curl.
+- Frontend React + shadcn/ui sudah berjalan, login → dashboard teruji via screenshot smoke test.
+
+**Sudah diimplementasi**
+- Auth (JWT), RBAC, Manajemen User/Role, Dashboard, Notifikasi, Audit Trail, Laporan (Excel/PDF), Modul BMN (Aset + foto multi + primary), Pemeliharaan (approval 3 tingkat + komentar), Persediaan (permintaan barang + approval + status fulfillment + komentar).
+
+**Pending P0**
+- Verifikasi E2E upload & serve gambar (Assets/Maintenance) end-to-end.
+- Menjalankan **testing_agent_v3** untuk pengujian menyeluruh semua alur (RBAC, approval, upload, export).
+
+---
+
+### Phase 1 — Foundation (Baseline sistem, RBAC, user management)
+> **Status: DONE** (sudah dibangun dan smoke-tested)
+
 **User stories**
-1. Sebagai Super Admin, saya bisa login dengan email+password agar dapat mengelola sistem.
-2. Sebagai Super Admin, saya bisa menambah user baru dan menetapkan role agar akses menu sesuai jabatan.
-3. Sebagai Super Admin, saya bisa menonaktifkan user agar akun tidak bisa digunakan.
-4. Sebagai user, saya bisa melihat profil saya agar data akun jelas.
-5. Sebagai sistem, setiap aksi penting tercatat di audit trail agar dapat diaudit.
+1. Super Admin bisa login.
+2. Super Admin bisa membuat user dan menetapkan role.
+3. Super Admin bisa menonaktifkan user.
+4. User bisa melihat profil.
+5. Sistem mencatat audit trail.
 
-**Backend (FastAPI + MongoDB)**
-- Setup proyek backend, koneksi Mongo, config env.
-- Model/collection inti: `users`, `roles`(opsional hard-coded permissions), `activity_logs`.
-- Auth: JWT login, bcrypt hash, refresh opsional (MVP: access token cukup), guard dependency per role.
-- Seed super admin (idempotent) + seed roles.
-- CRUD Manajemen User (admin-only): create/edit/activate/deactivate/reset password.
-- Endpoint profil (self) + update foto profil (base64 opsional).
-- Audit trail middleware/service untuk event penting.
+**Backend**
+- Setup env + Mongo connection.
+- Collections inti: `users`, `activity_logs`, `notifications`.
+- Auth + RBAC dependency guard.
+- Seed super admin + seed roles.
 
-**Frontend (React)**
-- Setup app shell: layout sidebar + topbar + routing, guard route by role.
-- Halaman: Login, Dashboard (placeholder stats), Manajemen User, Manajemen Role (MVP: daftar role & hak akses read-only), Profil, Pengaturan.
-- Komponen standar: table, modal form, badge status, empty/loading state.
+**Frontend**
+- App shell (sidebar + topbar), routing + protected routes.
+- Halaman core: Login, Dashboard, Users, Roles, Profile, Settings.
 
 **Testing (testing_agent_v3)**
-- Uji login, RBAC backend (akses ilegal ditolak), CRUD user, aktivasi/nonaktif, seed admin.
+- Tetap wajib dijalankan untuk regression lintas modul setelah perubahan besar.
 
 ---
 
 ### Phase 2 — V1 Modul BMN (Aset + Foto + Lokasi + PJ)
+> **Status: DONE** (fitur selesai; butuh verifikasi E2E upload/serve foto)
+
 **User stories**
-1. Sebagai Admin, saya bisa menambah aset BMN beserta foto utama dan foto tambahan.
-2. Sebagai Admin, saya bisa mencari/filter/sort aset agar cepat menemukan barang.
-3. Sebagai user berwenang, saya bisa melihat detail aset dengan galeri & lightbox.
-4. Sebagai Admin, saya bisa menetapkan Penanggung Jawab aset dan melihat riwayat perubahan PJ.
-5. Sebagai Admin, saya bisa melihat aset per lokasi untuk monitoring cepat.
+1. Admin tambah aset + multi foto (utama + galeri).
+2. Cari/filter/sort/pagination aset.
+3. Detail aset dengan galeri.
+4. Penetapan penanggung jawab + riwayat.
+5. Lokasi BMN.
 
 **Backend**
-- Collections: `assets`, `asset_images`(base64 + metadata + isPrimary), `asset_locations`(seed), `asset_responsibles` + `asset_responsible_history`.
-- CRUD aset (admin-only): fields umum + field khusus kendaraan, validasi kondisi/status.
-- Upload gambar aset (multipart) → simpan base64 di `asset_images`, dukung multiple + set primary.
-- Endpoint serve image: `GET /api/images/{imageId}` (content-type sesuai).
-- Listing aset dengan query (search/filter/pagination) + join sederhana (resolve primary image + PJ + lokasi).
+- Collections: `assets`, `asset_images` (saat ini base64 + serve via `GET /api/images/{id}`).
 
 **Frontend**
-- Data Aset BMN: tabel modern (search/filter/sort/pagination), thumbnail dari image endpoint.
-- Tambah/Edit Aset: form dengan section kendaraan kondisional; uploader multi gambar + preview + set cover.
-- Detail Aset: foto utama besar + galeri + lightbox + info lengkap.
-- Lokasi BMN: kartu lokasi + jumlah aset + listing per lokasi.
-- Penanggung Jawab Aset: assign PJ + riwayat.
+- Data Aset, Tambah/Edit, Detail, Lokasi, Penanggung Jawab.
 
 **Testing (testing_agent_v3)**
-- E2E: tambah aset + upload banyak foto + set primary + lihat detail + listing/filter + RBAC.
+- E2E: tambah aset + upload multi foto + set primary + tampil thumbnail.
 
 ---
 
 ### Phase 3 — Pemeliharaan + Approval Berjenjang (3 level) + Komentar
+> **Status: DONE** (fitur selesai; butuh verifikasi E2E foto kerusakan + workflow)
+
 **User stories**
-1. Sebagai Penanggung Jawab Kendaraan, saya bisa mengajukan pemeliharaan dan mengunggah foto kerusakan.
-2. Sebagai Admin (T1), saya bisa menyetujui/menolak dengan catatan dan meneruskan ke level berikutnya.
-3. Sebagai Kepala TU (T2), saya bisa melakukan approval hanya pada permintaan yang sudah lolos T1.
-4. Sebagai Kepala Satker (T3), saya bisa final approve/deny dan melihat riwayat approval lengkap.
-5. Sebagai pengaju, saya mendapat notifikasi saat status berubah.
+1. Pengajuan pemeliharaan + upload foto kerusakan.
+2. Approval T1 (Admin) → T2 (Kepala TU) → T3 (Kepala Satker).
+3. Riwayat approval lengkap + komentar.
+4. Notifikasi saat status berubah.
 
 **Backend**
-- Collections: `maintenance_requests`, `maintenance_images`(base64), `maintenance_approvals`, `maintenance_history`, `maintenance_notes`.
-- Workflow status: Draft → Menunggu T1/T2/T3 → Disetujui/ Ditolak → Sedang Dalam Pemeliharaan → Selesai.
-- Aturan RBAC per level approval + atomic update untuk transisi status.
-- Riwayat approval (nama, role, level, timestamp, catatan) + komentar per pengajuan.
+- Collections: `maintenance_requests`, `maintenance_images`.
 
 **Frontend**
-- Form Pengajuan Pemeliharaan: auto nomor, pilih aset/kendaraan, upload foto kerusakan multiple, status.
-- Approval Pemeliharaan: queue per level (role-based), aksi setujui/tolak + catatan.
-- Detail pengajuan: timeline status, riwayat approval, komentar.
-- Riwayat Pemeliharaan: filter status/tanggal/aset.
+- List/Form/Detail/Approval.
 
 **Testing (testing_agent_v3)**
-- Simulasi alur lengkap T1→T2→T3, tolak di level mana pun, komentar, validasi akses.
+- Simulasi alur lengkap T1→T2→T3 + reject path.
 
 ---
 
-### Phase 4 — Modul Persediaan (Permintaan Barang) + Approval Admin
+### Phase 4 — Modul Persediaan (Permintaan Barang) + Approval Admin + Status Pemenuhan
+> **Status: DONE (versi awal)**, **akan di-upgrade untuk integrasi stok**
+
 **User stories**
-1. Sebagai Kasubsi, saya bisa membuat permintaan barang dengan banyak item dalam satu pengajuan.
-2. Sebagai Admin, saya bisa menyetujui/menolak permintaan dengan alasan.
-3. Sebagai Admin, saya bisa mengubah status pemenuhan (Diproses→Diserahkan→Selesai).
-4. Sebagai pemohon, saya bisa memantau status permintaan saya.
-5. Sebagai sistem, setiap perubahan status tercatat agar audit jelas.
+1. User ajukan permintaan multi-item.
+2. Admin approve/reject.
+3. Admin ubah status pemenuhan (Diproses→Diserahkan→Selesai).
+4. Pemohon memantau status.
 
 **Backend**
-- Collections: `inventory_requests`, `inventory_request_items`, `inventory_notes`.
-- Nomor permintaan otomatis, multi-item, status workflow.
-- Endpoint monitoring (admin) + endpoint riwayat (self).
+- Collection: `inventory_requests` (items embedded + comments + history).
 
 **Frontend**
-- Ajukan Permintaan: form header + tabel item dinamis (tambah/hapus baris), draft/submit.
-- Approval Permintaan (admin): setujui/tolak + catatan.
-- Monitoring & Riwayat: filter status/tanggal/unit.
-- Komentar pada permintaan.
+- Ajukan Permintaan, Approval, Monitoring, Riwayat, Detail.
 
 **Testing (testing_agent_v3)**
-- E2E submit multi item → approve → ubah status hingga selesai, RBAC.
+- E2E submit → approve → status sampai selesai.
 
 ---
 
 ### Phase 5 — Notifikasi, Audit Trail UI, Laporan + Export
+> **Status: DONE (fitur utama)**, perlu verifikasi export end-to-end
+
 **User stories**
-1. Sebagai Admin, saya melihat badge notifikasi saat ada pengajuan baru.
-2. Sebagai pengaju, saya menerima notifikasi saat permintaan disetujui/ditolak/diteruskan.
-3. Sebagai user, saya bisa menandai notifikasi sebagai sudah dibaca atau tandai semua.
-4. Sebagai auditor, saya bisa menelusuri audit trail berdasarkan user/tanggal/aksi.
-5. Sebagai Admin, saya bisa ekspor laporan ke Excel/PDF untuk pelaporan resmi.
-
-**Backend**
-- Collections: `notifications`.
-- Trigger notifikasi pada event: pengajuan baru, approval per level, perubahan status.
-- API notifikasi: list (unread first), mark read, mark all.
-- Laporan: endpoint agregasi + filter (tanggal/unit/status/kondisi) + export Excel/PDF.
-
-**Frontend**
-- Bell dropdown + halaman Notifikasi (read/unread, mark all), suara browser saat notif baru (polling interval MVP).
-- Halaman Audit Trail (filter + table).
-- Halaman Laporan: tab per jenis laporan + filter + tombol Export Excel/PDF + Print.
-- Dashboard: isi statistik + charts recharts (kondisi aset, permintaan per bulan) berbasis API.
+1. Badge notifikasi untuk pengajuan baru.
+2. Notifikasi perubahan status.
+3. Mark read / mark all.
+4. Audit trail bisa ditelusuri.
+5. Export laporan Excel/PDF.
 
 **Testing (testing_agent_v3)**
-- Uji notifikasi end-to-end, badge, mark read, suara, audit trail tampil, export berjalan.
+- Uji notifikasi, suara, audit, export.
 
 ---
 
-### Phase 6 — Hardening, RBAC matrix final, seed data, polish UX
-**User stories**
-1. Sebagai tiap role, saya hanya melihat menu yang relevan dan tidak bisa akses endpoint terlarang.
-2. Sebagai user mobile, tampilan tetap nyaman dipakai.
-3. Sebagai Admin, saya bisa mencari cepat di semua tabel besar tanpa lag berlebihan.
-4. Sebagai user, saya mendapat pesan error yang jelas saat aksi ditolak.
-5. Sebagai instansi, aplikasi terlihat profesional (empty/loading/confirm dialog konsisten).
+### Phase 6 — NEW: Modul **Stock Barang Persediaan** (P0 Feature Addition)
+> **Status: NOT STARTED** (akan dibangun sekarang)
+
+**Tujuan**
+- Menambah submenu dan sistem **Stock Barang Persediaan** yang hanya dapat diakses **PENGELOLA BMN / ADMIN (Super Admin)**.
+- Menyediakan dashboard stok, CRUD master barang, transaksi barang masuk, penyesuaian stok, riwayat pergerakan, notifikasi stok menipis/habis, serta integrasi dengan permintaan barang.
+
+#### 6.1 User Stories (Stock)
+1. Admin bisa melihat ringkasan: total jenis, stok aman/menipis/habis, barang masuk/keluar (filter periode).
+2. Admin bisa mengelola master barang: tambah/edit/hapus + foto barang.
+3. Admin bisa mencatat **Barang Masuk** → stok otomatis bertambah.
+4. Admin bisa melakukan **Penyesuaian Stok** (tambah/kurang) dengan alasan wajib.
+5. Sistem menyimpan **Riwayat Pergerakan Stok**.
+6. Sistem mengirim notifikasi otomatis ke Admin saat stok ≤ minimum atau stok = 0.
+7. Integrasi permintaan: stok hanya berkurang saat status **Barang Diserahkan/Selesai**.
+8. Validasi stok sebelum approval; dukung opsi **partial approval** (jumlah diminta vs disetujui vs diserahkan).
+
+#### 6.2 Backend (FastAPI + MongoDB)
+**RBAC**
+- Tambah permission: `stock_manage` (hanya role `Pengelola BMN / Admin`).
+- Semua endpoint stock wajib `Depends(require_permission("stock_manage"))`.
+
+**Collections baru (MongoDB)**
+- `inventory_items`
+- `inventory_categories` (opsional; bisa hard-coded seed kategori)
+- `inventory_images` (foto barang persediaan)
+- `inventory_stock_transactions`
+- `inventory_stock_adjustments` (atau digabung jadi transaksi dengan type)
+
+**Endpoints baru (router `routers/stock.py`)**
+1. Dashboard stats:
+   - `GET /api/stock/dashboard?period=today|week|month|year|custom&start=YYYY-MM-DD&end=YYYY-MM-DD`
+2. Master items:
+   - `GET /api/stock/items` (search/filter/sort/pagination)
+   - `POST /api/stock/items`
+   - `GET /api/stock/items/{id}`
+   - `PUT /api/stock/items/{id}`
+   - `DELETE /api/stock/items/{id}`
+3. Foto item (mengikuti pola gambar existing: base64 + serve):
+   - `POST /api/stock/items/{id}/images` (upload)
+   - `PUT /api/stock/items/{id}/images/{image_id}/primary`
+   - `DELETE /api/stock/items/{id}/images/{image_id}`
+   - (Serve image reuse endpoint existing `GET /api/images/{image_id}` dengan perluasan lookup ke inventory_images)
+4. Barang masuk:
+   - `POST /api/stock/transactions/in` (record STOCK_IN)
+5. Penyesuaian stok:
+   - `POST /api/stock/adjustments` (ADJUSTMENT_IN/OUT) + alasan wajib
+6. Riwayat stock:
+   - `GET /api/stock/history` (filter tanggal, item, jenis transaksi)
+
+**Integrasi dengan `routers/inventory.py`**
+- Validasi stok saat admin approve:
+  - Jika stok tidak cukup → blok approval (atau izinkan partial approval jika diaktifkan).
+- Tambah field di `inventory_requests.items[]`:
+  - `jumlah_diminta`, `jumlah_disetujui`, `jumlah_diserahkan`.
+- Saat status berubah ke **Barang Diserahkan** atau **Selesai**:
+  - sistem membuat transaksi STOCK_OUT dan mengurangi `current_stock` item.
+- Pastikan stok **tidak** berkurang saat permintaan dibuat.
+
+**Notifikasi stok menipis/habis**
+- Setelah setiap perubahan stok (in/out/adjustment), cek:
+  - `current_stock <= minimum_stock` → kirim notifikasi ke role Admin.
+  - `current_stock == 0` → kirim notifikasi tipe “danger”.
+
+**Audit trail**
+- Semua aksi stock (tambah item, edit, delete, stock-in, adjustment, stock-out dari pemenuhan permintaan) wajib log ke `activity_logs`.
+
+#### 6.3 Frontend (React)
+**Menu & struktur sidebar**
+- Update grup “Monitoring Persediaan” menjadi:
+  - Stock Barang Persediaan (🔒 hanya admin)
+  - Kebutuhan Barang (opsional placeholder bila belum dibuat)
+  - Ajukan Permintaan
+  - Approval
+  - Monitoring Permintaan
+  - Riwayat Permintaan
+
+**Routes & halaman baru**
+- `/persediaan/stock` → StockDashboard
+- `/persediaan/stock/items` → StockList
+- `/persediaan/stock/items/tambah` → StockForm
+- `/persediaan/stock/items/:id` → StockItemDetail (opsional)
+- `/persediaan/stock/in` → StockIn
+- `/persediaan/stock/adjustment` → StockAdjustment
+- `/persediaan/stock/history` → StockHistory
+
+**Guard akses**
+- Frontend:
+  - Menu hanya tampil jika `can("stock_manage")`.
+  - Jika user non-admin akses via URL → tampil halaman **Akses Ditolak**.
+- Backend:
+  - Semua endpoint stock 403 bila tanpa permission.
+
+**Integrasi UI dengan permintaan**
+- Di `InventoryDetail` (admin):
+  - tampilkan stok tersedia per item (berdasarkan master stock), warning jika tidak cukup.
+  - dukung input `jumlah_disetujui` (partial approval) + catatan wajib saat partial.
+  - saat “Serahkan Barang” men-trigger pengurangan stok otomatis.
+
+**Komponen foto**
+- Reuse pola uploader (opsional: single uploader untuk foto barang persediaan) + thumbnail di tabel.
+
+#### 6.4 Testing (testing_agent_v3)
+- RBAC:
+  - Role selain admin tidak bisa akses `/persediaan/stock*` (frontend + backend 403).
+- Stock CRUD:
+  - tambah item + upload foto + edit + delete.
+- Stock movements:
+  - barang masuk menaikkan stok, adjustment menaik/menurunkan, semuanya masuk riwayat.
+- Integrasi permintaan:
+  - permintaan dibuat tidak mengurangi stok.
+  - approval validasi stok.
+  - status “Barang Diserahkan/Selesai” mengurangi stok dan membuat transaksi STOCK_OUT.
+  - notifikasi stok menipis/habis muncul.
+
+---
+
+### Phase 7 — Hardening, seed data, polish UX, regression
+> Menggabungkan hardening lama (Phase 6 pada plan sebelumnya) + tambahan hardening untuk modul Stock.
 
 **Scope**
-- Review & kunci RBAC per endpoint + per halaman.
-- Seed data lengkap: users per role + aset + permintaan pemeliharaan + permintaan barang.
-- Konsistensi status badge, dialog konfirmasi hapus, validasi form.
-- Final regression test.
+- Review & kunci RBAC matrix final semua endpoint + semua halaman.
+- Seed data lengkap:
+  - users per role,
+  - aset,
+  - pemeliharaan,
+  - permintaan persediaan,
+  - master stock item + transaksi contoh.
+- Konsistensi status badge & pesan error (termasuk halaman “Akses Ditolak”).
+- Pastikan export laporan tetap berjalan.
+- Final regression test menyeluruh.
 
 **Testing (testing_agent_v3)**
-- Uji lintas role (6 role) + skenario utama BMN & Persediaan + export.
+- Uji lintas 6 role + alur BMN + Pemeliharaan + Persediaan + Stock + export.
 
-## 3) Next Actions
-1. Buat struktur repo frontend/backend + konfigurasi Mongo connection.
-2. Implement seed super admin (email: imigrasi.takengon2@gmail.com, password: Admin@123) + JWT login.
-3. Implement RBAC dependency di backend + route guard di frontend.
-4. Implement Manajemen User (backend+frontend) sebagai baseline semua modul.
-5. Jalankan **testing_agent_v3** untuk Phase 1 sebelum lanjut ke modul BMN.
+## 3) Next Actions (Revised)
+1. **Jalankan testing_agent_v3** untuk baseline regression (modul existing) sebelum menambah modul Stock.
+2. Verifikasi E2E upload/serve gambar (aset & pemeliharaan) dan perbaiki jika ada issue.
+3. Implement **Phase 6 (Stock Barang Persediaan)**:
+   - Tambah permission `stock_manage` (admin only).
+   - Buat router stock + collections + integrasi permintaan.
+   - Tambah halaman stock di frontend + route + akses ditolak.
+4. Jalankan **testing_agent_v3** khusus modul Stock + integrasi permintaan.
 
-## 4) Success Criteria
-- Super admin bisa login, kelola user, set role; tidak ada registrasi publik.
-- RBAC benar-benar enforced di backend (akses tidak sah mendapat 401/403) dan menu UI menyesuaikan role.
-- Modul BMN: CRUD aset + multi-foto (utama+galeri) tersimpan permanen (base64 MongoDB) dan tampil di detail.
-- Pemeliharaan: workflow + approval 3 tingkat dengan riwayat & komentar berjalan end-to-end.
-- Persediaan: pengajuan multi-item + approval admin + status fulfillment berjalan.
+## 4) Success Criteria (Updated)
+- Super admin bisa login dan kelola user/role; tidak ada registrasi publik.
+- RBAC enforced di backend (401/403) + UI menyesuaikan role.
+- BMN: CRUD aset + multi-foto tampil dan bisa diserve konsisten.
+- Pemeliharaan: workflow + approval 3 tingkat dengan riwayat & komentar berjalan E2E.
+- Persediaan: permintaan multi-item + approval + fulfillment berjalan.
+- **Stock Persediaan (Admin-only)**:
+  - Master item + foto, transaksi masuk, penyesuaian stok, riwayat stok.
+  - Integrasi permintaan: stok berkurang hanya saat barang diserahkan/selesai.
+  - Validasi stok sebelum approval + dukung partial approval (opsional).
+  - Notifikasi stok menipis/habis ke admin.
 - Notifikasi in-app (badge + read/unread + mark all) + suara browser bekerja.
-- Audit trail & laporan (filter + export Excel/PDF/print) tersedia.
-- Responsif (desktop–mobile), ada seed data, dan seluruh fitur utama lolos pengujian bertahap dengan testing_agent_v3.
+- Audit trail & laporan (filter + export Excel/PDF) tersedia.
+- Responsif (desktop–mobile), seed data memadai, dan seluruh fitur utama lolos pengujian bertahap dengan **testing_agent_v3**.

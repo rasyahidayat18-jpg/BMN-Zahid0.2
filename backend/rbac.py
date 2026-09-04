@@ -24,6 +24,7 @@ PERMISSIONS_BY_ROLE = {
         "asset_view", "asset_manage", "location_view", "responsible_manage",
         "maintenance_view_all", "maintenance_approve_1",
         "inventory_view_all", "inventory_approve",
+        "stock_manage",
         "reports_view", "audit_view", "notifications", "settings",
     ],
     KEPALA_SATKER: [
@@ -59,7 +60,7 @@ PERMISSIONS_BY_ROLE = {
 
 # Descriptions for the "Manajemen Role" page
 ROLE_DESCRIPTIONS = {
-    PENGELOLA_BMN: "Super Admin / Pengelola BMN. Akses penuh: manajemen user, aset, foto, lokasi, penanggung jawab, approval pemeliharaan tingkat 1, approval barang, laporan, dan audit trail.",
+    PENGELOLA_BMN: "Super Admin / Pengelola BMN. Akses penuh: manajemen user, aset, foto, lokasi, penanggung jawab, approval pemeliharaan tingkat 1, approval barang, stock barang persediaan, laporan, dan audit trail.",
     KEPALA_SATKER: "Approval pemeliharaan tingkat 3 (final), mengajukan kebutuhan barang & pemeliharaan, melihat dashboard dan riwayat approval.",
     KEPALA_TU: "Approval pemeliharaan tingkat 2, mengajukan kebutuhan barang & pemeliharaan, melihat dashboard dan riwayat approval.",
     KASUBSI_TI: "Mengajukan kebutuhan barang & pemeliharaan kendaraan dinas serta memantau status pengajuan sendiri.",

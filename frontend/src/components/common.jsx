@@ -72,3 +72,18 @@ export const EmptyState = ({ title = "Belum ada data", description, action, icon
     {action && <div className="mt-4">{action}</div>}
   </div>
 );
+
+export const AccessDenied = () => (
+  <div className="flex flex-col items-center justify-center py-24 text-center" data-testid="access-denied-page">
+    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m4.9 4.9 14.2 14.2"/>
+      </svg>
+    </div>
+    <h2 className="font-heading text-2xl font-semibold text-foreground mb-2">AKSES DITOLAK</h2>
+    <p className="text-sm text-muted-foreground max-w-sm">
+      Anda tidak memiliki hak akses untuk membuka halaman ini.
+    </p>
+  </div>
+);

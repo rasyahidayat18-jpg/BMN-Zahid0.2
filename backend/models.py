@@ -127,3 +127,54 @@ class InventoryCreate(BaseModel):
     catatan: Optional[str] = ""
     items: List[InventoryItemLine] = []
     submit: bool = True
+
+
+# ---- Stock Barang Persediaan Models ----
+
+class StockItemCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    item_code: str
+    item_name: str
+    category: str = "ATK"
+    unit: str = "Unit"
+    initial_stock: float = 0
+    minimum_stock: float = 0
+    storage_location: Optional[str] = ""
+    description: Optional[str] = ""
+
+
+class StockItemUpdate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    item_code: Optional[str] = None
+    item_name: Optional[str] = None
+    category: Optional[str] = None
+    unit: Optional[str] = None
+    minimum_stock: Optional[float] = None
+    storage_location: Optional[str] = None
+    description: Optional[str] = None
+
+
+class StockInCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    item_id: str
+    quantity: float
+    source: Optional[str] = ""
+    document_number: Optional[str] = ""
+    notes: Optional[str] = ""
+    tanggal: Optional[str] = ""
+
+
+class StockAdjustmentCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    item_id: str
+    physical_stock: float
+    adjustment_type: str  # "Penambahan Stok" or "Pengurangan Stok"
+    reason: str
+    notes: Optional[str] = ""
+
+
+class PartialApprovalAction(BaseModel):
+    action: str  # approve | reject | partial
+    catatan: Optional[str] = ""
+    items_approved: Optional[List[dict]] = None  # [{index, jumlah_disetujui}]
+
